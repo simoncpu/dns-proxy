@@ -3,8 +3,29 @@ import requests
 from dnslib import DNSRecord, DNSError, DNSHeader, RR, QTYPE, CLASS, A, TXT
 
 UPSTREAM_DNS_URL = "https://8.8.8.8/resolve"
-#UPSTREAM_DNS_URL = "https://dns.google/resolve"
 DNS_PORT = 53
+CACHE_SIZE = 128
+
+dns_cache = {}
+cache_order = []
+
+def fetch_from_upstream(qname, qtype):
+    cache_key = (qname, qtype)
+
+    if cache_key in dns_cache:
+        return dns_cache[cache_key]
+
+    response = requests.get(UPSTREAM_DNS_URL, params={"name": qname, "type": qtype})
+    response_json = response.json()
+
+    dns_cache[cache_key] = response_json
+    cache_order.append(cache_key)
+
+    if len(cache_order) > CACHE_SIZE:
+        oldest_key = cache_order.pop(0)
+        del dns_cache[oldest_key]
+
+    return response_json
 
 def dns_proxy(data, address, socket):
     try:
@@ -12,11 +33,10 @@ def dns_proxy(data, address, socket):
 
         qname = str(request.q.qname)
         qtype = QTYPE[request.q.qtype]
-        
+
         print(f"Received a request for {qname} with record type: {qtype}")
 
-        response = requests.get(UPSTREAM_DNS_URL, params={"name": qname, "type": qtype})
-        response_json = response.json()
+        response_json = fetch_from_upstream(qname, qtype)
 
         dns_response = DNSRecord(DNSHeader(id=request.header.id, qr=1, aa=1, ra=1))
 
