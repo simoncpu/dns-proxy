@@ -1,36 +1,84 @@
-# dns-proxy
+# DNS Proxy
 
-A DNS Proxy server that forwards queries to Google's DNS-over-HTTPS (DoH) service.
+A production-ready DNS proxy that forwards queries to DNS-over-HTTPS (DoH) services with intelligent caching, circuit breaker protection, and comprehensive monitoring.
 
-## Overview
+**Key Features:**
+- High-performance with TTL-aware caching
+- Circuit breaker pattern for resilience
+- Structured JSON logging with request tracing
+- Comprehensive error handling
+- Graceful shutdown with resource cleanup
+- Real-time statistics and health monitoring
 
-I created this because even though Chrome and Firefox support DNS-over-HTTPS (DoH) and DNS-over-TLS (DoT), Safari doesn’t yet. I managed to get around this using the Cloudflare app and also with Quad9's mobile provisioning profile. So technically, I didn't need to make my own DNS proxy, but I decided to do it for teh lulz. This version is just the beginning. I'll be learning more about DoT and how to proxy it. Currently, it only supports a handful of common record types, but I'll update it as needed.
+## Quick Start
 
-## Usage
+**Requirements:** Python 3.11+
 
-### Run the shell script
+```bash
+# Setup
+python3 -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
 
+# Run on unprivileged port
+DNS_PORT=1053 python3 main.py
+
+# Test it
+dig @localhost -p 1053 google.com
 ```
-$ sudo ./proxy.sh
+
+For production use on port 53: `sudo python3 main.py`
+
+## Configuration
+
+Key environment variables (see `.env.example` for complete list):
+
+```bash
+DNS_PORT=53                                    # DNS server port
+UPSTREAM_DNS_URL=https://8.8.8.8/resolve       # Upstream DoH service
+CACHE_SIZE=1000                               # Maximum cache entries
+LOG_LEVEL=INFO                                # DEBUG, INFO, WARNING, ERROR
+LOG_FILE=logs/dns-proxy.log                  # Log file path
 ```
 
-### Test the DNS proxy
+## Testing
 
+```bash
+# Query different record types
+dig @localhost google.com A
+dig @localhost google.com AAAA
+dig @localhost google.com MX
+
+# Test caching performance
+for i in {1..5}; do time dig @localhost google.com +short; done
 ```
-$ dig @localhost google.com
 
-; <<>> DiG 9.10.6 <<>> @localhost google.com
-; (2 servers found)
-;; global options: +cmd
-;; Got answer:
-;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 32761
-;; flags: qr aa rd ra; QUERY: 0, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0
+## Monitoring
 
-;; ANSWER SECTION:
-google.com.		60	IN	A	142.250.206.206
+- **Logs:** Structured JSON in `logs/dns-proxy.log`
+- **Real-time:** `tail -f logs/dns-proxy.log | jq`
+- **Metrics:** Cache statistics, circuit breaker state, response times
 
-;; Query time: 1 msec
-;; SERVER: 127.0.0.1#53(127.0.0.1)
-;; WHEN: Tue Oct 10 10:04:17 PST 2023
-;; MSG SIZE  rcvd: 38
-```
+## Architecture
+
+- **Main Server** (`main.py`): UDP server and request handling
+- **DNS Proxy Service**: Core logic and coordination
+- **Cache Service**: TTL-aware caching with LRU eviction
+- **Upstream Service**: DoH client with circuit breaker
+- **Logging Service**: Structured JSON logging
+
+## Troubleshooting
+
+**Permission denied on port 53:** Use `DNS_PORT=1053` or run with `sudo`
+
+**Dependencies missing:** Activate venv: `source venv/bin/activate`
+
+**Service not responding:** Check logs: `tail -f logs/dns-proxy.log`
+
+## Author
+
+Simon Cornelius P. Umacob <t07dq0dfv@mozmail.com>
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.

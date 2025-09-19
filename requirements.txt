@@ -1,2 +1,6 @@
-dnslib
-requests
+dnslib>=0.9.23
+requests>=2.31.0
+loguru>=0.7.2
+cachetools>=5.3.0
+pytest>=7.4.0
+pytest-mock>=3.11.0
