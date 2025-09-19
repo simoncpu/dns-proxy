@@ -34,11 +34,11 @@ For production use on port 53: `sudo python3 main.py`
 Key environment variables (see `.env.example` for complete list):
 
 ```bash
-DNS_PORT=53                                    # DNS server port
-UPSTREAM_DNS_URL=https://8.8.8.8/resolve       # Upstream DoH service
+DNS_PORT=53                                   # DNS server port
+UPSTREAM_DNS_URL=https://8.8.8.8/resolve      # Upstream DoH service
 CACHE_SIZE=1000                               # Maximum cache entries
 LOG_LEVEL=INFO                                # DEBUG, INFO, WARNING, ERROR
-LOG_FILE=logs/dns-proxy.log                  # Log file path
+LOG_FILE=logs/dns-proxy.log                   # Log file path
 ```
 
 ## Testing
